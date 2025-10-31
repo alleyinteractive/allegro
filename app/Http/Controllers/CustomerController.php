@@ -57,24 +57,32 @@ class CustomerController extends Controller
         $messageType = '';
 
         if (empty($email) || empty($token)) {
-            $message = 'Invalid confirmation link.';
-            $messageType = 'error';
+            return view('confirmationPage', [
+                'message' => 'Invalid confirmation link.',
+                'messageType' => 'error',
+            ]);
         }
 
         $customer = Customer::where('email', $email)->first();
         if (! $customer) {
-            $message = 'Customer not found.';
-            $messageType = 'error';
+            return view('confirmationPage', [
+                'message' => 'Customer not found.',
+                'messageType' => 'error',
+            ]);
         }
 
         if (md5($customer->email) !== $token) {
-            $message = 'Invalid confirmation token.';
-            $messageType = 'error';
+            return view('confirmationPage', [
+                'message' => 'Invalid confirmation token.',
+                'messageType' => 'error',
+            ]);
         }
 
         if ($customer->email_verified) {
-            $message = 'Email already verified.';
-            $messageType = 'info';
+            return view('confirmationPage', [
+                'message' => 'Email already verified.',
+                'messageType' => 'info',
+            ]);
         }
 
         if (empty($message)) {
@@ -82,14 +90,10 @@ class CustomerController extends Controller
             $customer->email_verified = true;
             $customer->save();
 
-            $message = 'Email successfully verified.';
-            $messageType = 'success';
+            return view('confirmationPage', [
+                'message' => 'Email successfully verified.',
+                'messageType' => 'success',
+            ]);
         }
-
-        // Display a view passing the message and message type.
-        return view('confirmationPage', [
-            'message' => $message,
-            'messageType' => $messageType,
-        ]);
     }
 }
