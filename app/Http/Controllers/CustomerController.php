@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use \App\Models\Customer;
+use App\Models\Customer;
+use App\Mail\ConfirmEmail;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * CustomerController
@@ -45,6 +47,49 @@ class CustomerController extends Controller
     }
 
     public function sendEmailVerification(Customer $customer) {
-        // Logic to send email verification.
+        Mail::to($customer->email)->send(new ConfirmEmail($customer));
+    }
+
+    public function confirmationPage(Request $request) {
+        $email = $request->query('email');
+        $token = $request->query('token');
+        $message = '';
+        $messageType = '';
+
+        if (empty($email) || empty($token)) {
+            $message = 'Invalid confirmation link.';
+            $messageType = 'error';
+        }
+
+        $customer = Customer::where('email', $email)->first();
+        if (! $customer) {
+            $message = 'Customer not found.';
+            $messageType = 'error';
+        }
+
+        if (md5($customer->email) !== $token) {
+            $message = 'Invalid confirmation token.';
+            $messageType = 'error';
+        }
+
+        if ($customer->email_verified) {
+            $message = 'Email already verified.';
+            $messageType = 'info';
+        }
+
+        if (empty($message)) {
+            // Mark email as verified.
+            $customer->email_verified = true;
+            $customer->save();
+
+            $message = 'Email successfully verified.';
+            $messageType = 'success';
+        }
+
+        // Display a view passing the message and message type.
+        return view('confirmationPage', [
+            'message' => $message,
+            'messageType' => $messageType,
+        ]);
     }
 }
